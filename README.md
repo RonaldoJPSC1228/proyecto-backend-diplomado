@@ -12,7 +12,7 @@ Este proyecto es una API backend para gestión de usuarios y datos utilizando Fi
 ## Cómo obtener las llaves para el ambiente de entorno:
 1. Ve a Firebase: [Firebase](https://firebase.google.com/?hl=es-419).
 2. Crear un proyecto: Si no tienes un proyecto, crea uno nuevo.
-3. En Firebase, dirígete a la sección "Configuración del proyecto" (ícono de engranaje en la parte superior izquierda).
+3. En Firebase, dirígete a la sección "Configuración del proyecto" (ícono de engranaje en la parte superior).
 4. En la consola de Firebase, ve a la pestaña "Configuración" > "General" y copia la clave API que aparece en "apiKey"
 5. Puede que necesites copiar el "authDomain" y "projectId".
 6. Tu archivo .env debe quedar parecido al `.env.example.json`
@@ -25,6 +25,11 @@ Este proyecto es una API backend para gestión de usuarios y datos utilizando Fi
 5. Descarga el archivo `serviceAccountKey.json` y colócalo en tu proyecto.
 6. Debe verse algo similar al `serviceAccountKey.example.json`
 7. Configura la variable de entorno `FIREBASE_PRIVATE_KEY_PATH` con la ruta del archivo descargado.
+
+## Cómo obtener el archivo firebase.js:
+1. Ve a la sección "Configuración del proyecto" (ícono de engranaje) > "Cuentas de servicio".
+2. Haz clic en "Agregar APP".
+3. Descarga el archivo copia `firebaseConfig` y colócalo en un archivo `firebase.js` similar a `firebase.example.js`.
 
 ### Recomendaciones:
 1. Para usar register debes pasar como minimo el email, password, nombre. 
