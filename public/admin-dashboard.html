@@ -32,9 +32,10 @@
       <div id="contenido"></div>
 
       <!-- Botón para abrir el modal de crear item -->
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearItemModal">
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearItemModal" id="crearItemButton" style="display: none;">
         Crear nuevo ítem
       </button>
+
     </div>
   </div>
 
@@ -120,6 +121,8 @@
       });
       html += `</ul>`;
       contenidoDiv.innerHTML = html;
+
+      document.getElementById('crearItemButton').style.display = 'none';  // Aseguramos que se oculta
     });
 
     // Mostrar ítems
@@ -147,6 +150,9 @@
 
       html += `</ul>`;
       contenidoDiv.innerHTML = html;
+
+      // Mostrar el botón de crear ítem
+      document.getElementById('crearItemButton').style.display = 'block';  // Aseguramos que se muestra
     });
 
     // Eliminar ítem
