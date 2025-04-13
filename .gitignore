@@ -4,5 +4,7 @@ node_modules/
 # Ignorar archivos de configuración de entorno
 .env
 
+firebase.js
+
 # Ignorar claves privadas de Firebase
 serviceAccountKey.json

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script type="module" src="./firebase/firebase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body style="background-color: #f8f9fa;">
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <div class="bg-dark text-white p-3" style="width: 250px; height: 100vh;">
+      <h4>Admin</h4>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a href="#" class="nav-link text-white" id="ver-usuarios">Usuarios</a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link text-white" id="ver-items">Items</a>
+        </li>
+        <li class="nav-item mt-3">
+          <button class="btn btn-danger w-100" id="logout">Cerrar sesión</button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="p-4 flex-grow-1">
+      <h2 class="mb-4">Bienvenido, Administrador</h2>
+      <div id="contenido"></div>
+
+      <!-- Botón para abrir el modal de crear item -->
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearItemModal">
+        Crear nuevo ítem
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal para crear ítem -->
+  <div class="modal fade" id="crearItemModal" tabindex="-1" aria-labelledby="crearItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="crearItemModalLabel">Crear Nuevo Ítem</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formCrearItem">
+            <div class="mb-3">
+              <label for="itemNombre" class="form-label">Nombre del ítem</label>
+              <input type="text" class="form-control" id="itemNombre" required />
+            </div>
+            <div class="mb-3">
+              <label for="itemDescripcion" class="form-label">Descripción</label>
+              <input type="text" class="form-control" id="itemDescripcion" required />
+            </div>
+            <div class="mb-3">
+              <label for="itemPrecio" class="form-label">Precio</label>
+              <input type="number" class="form-control" id="itemPrecio" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Crear ítem</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para editar ítem -->
+  <div class="modal fade" id="editarItemModal" tabindex="-1" aria-labelledby="editarItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editarItemModalLabel">Editar Ítem</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formEditarItem">
+            <div class="mb-3">
+              <label for="itemNombreEdit" class="form-label">Nombre del ítem</label>
+              <input type="text" class="form-control" id="itemNombreEdit" required />
+            </div>
+            <div class="mb-3">
+              <label for="itemDescripcionEdit" class="form-label">Descripción</label>
+              <input type="text" class="form-control" id="itemDescripcionEdit" required />
+            </div>
+            <div class="mb-3">
+              <label for="itemPrecioEdit" class="form-label">Precio</label>
+              <input type="number" class="form-control" id="itemPrecioEdit" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Actualizar ítem</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db, signOut, collection, getDocs, addDoc, doc, updateDoc, getDoc, deleteDoc, Timestamp } from './firebase/firebase.js';
+
+    const contenidoDiv = document.getElementById('contenido');
+    const formCrearItem = document.getElementById('formCrearItem');
+    const formEditarItem = document.getElementById('formEditarItem');
+    const itemNombre = document.getElementById('itemNombre');
+    const itemDescripcion = document.getElementById('itemDescripcion');
+    const itemPrecio = document.getElementById('itemPrecio');
+    const itemNombreEdit = document.getElementById('itemNombreEdit');
+    const itemDescripcionEdit = document.getElementById('itemDescripcionEdit');
+    const itemPrecioEdit = document.getElementById('itemPrecioEdit');
+
+    // Mostrar usuarios
+    document.getElementById('ver-usuarios').addEventListener('click', async () => {
+      const usuariosRef = collection(db, 'users');
+      const snapshot = await getDocs(usuariosRef);
+      let html = `<h4>Usuarios:</h4><ul class="list-group">`;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        html += `<li class="list-group-item">${data.nombre || 'Sin nombre'} - ${data.email}</li>`;
+      });
+      html += `</ul>`;
+      contenidoDiv.innerHTML = html;
+    });
+
+    // Mostrar ítems
+    document.getElementById('ver-items').addEventListener('click', async () => {
+      const itemsRef = collection(db, 'items');
+      const snapshot = await getDocs(itemsRef);
+      let html = `<h4>Items:</h4><ul class="list-group">`;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const itemId = doc.id;  // Obtener el ID del ítem
+
+        // Añadir botones de editar y eliminar
+        html += `
+          <li class="list-group-item">
+            ${data.nombre || 'Sin nombre'} - $${data.precio || 0}
+            <button class="btn btn-warning btn-sm float-end" 
+                    data-bs-toggle="modal" data-bs-target="#editarItemModal"
+                    onclick="editarItem('${itemId}')">Editar</button>
+            <button class="btn btn-danger btn-sm float-end me-2"
+                    onclick="eliminarItem('${itemId}')">Eliminar</button>
+          </li>
+        `;
+      });
+
+      html += `</ul>`;
+      contenidoDiv.innerHTML = html;
+    });
+
+    // Eliminar ítem
+    window.eliminarItem = async function(itemId) {
+      const itemRef = doc(db, 'items', itemId);
+
+      try {
+        await deleteDoc(itemRef);
+        Swal.fire('Éxito', 'Ítem eliminado correctamente', 'success');
+        document.getElementById('ver-items').click();  // Actualizar la lista de ítems
+      } catch (error) {
+        console.error('Error al eliminar el ítem:', error);
+        Swal.fire('Error', 'Hubo un problema al eliminar el ítem', 'error');
+      }
+    };
+
+    // Cerrar sesión
+    document.getElementById('logout').addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = '/';
+    });
+
+    // Crear un nuevo ítem
+    formCrearItem.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const nuevoItem = {
+        nombre: itemNombre.value,
+        descripcion: itemDescripcion.value,
+        precio: parseFloat(itemPrecio.value),
+        fecha_creacion: Timestamp.fromDate(new Date()),  // Fecha actual
+      };
+
+      try {
+        const itemsRef = collection(db, 'items');
+        await addDoc(itemsRef, nuevoItem);
+        Swal.fire('Éxito', 'Item creado correctamente', 'success');
+        itemNombre.value = '';
+        itemDescripcion.value = '';
+        itemPrecio.value = '';
+        $('#crearItemModal').modal('hide');
+        document.getElementById('ver-items').click();
+      } catch (error) {
+        console.error('Error al crear el ítem:', error);
+        Swal.fire('Error', 'Hubo un problema al crear el ítem', 'error');
+      }
+    });
+
+    // Cargar datos del ítem para editar
+    window.editarItem = async function(itemId) {
+      const itemRef = doc(db, 'items', itemId);
+      const docSnap = await getDoc(itemRef);
+
+      if (docSnap.exists()) {
+        const item = docSnap.data();
+        itemNombreEdit.value = item.nombre;
+        itemDescripcionEdit.value = item.descripcion;
+        itemPrecioEdit.value = item.precio;
+
+        // Guardar el ID del ítem en el formulario para actualizar
+        formEditarItem.dataset.itemId = itemId;
+      } else {
+        Swal.fire('Error', 'El ítem no existe', 'error');
+      }
+    };
+
+    // Actualizar ítem
+    formEditarItem.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const itemId = formEditarItem.dataset.itemId;
+      const itemRef = doc(db, 'items', itemId);
+
+      const updatedItem = {
+        nombre: itemNombreEdit.value,
+        descripcion: itemDescripcionEdit.value,
+        precio: parseFloat(itemPrecioEdit.value),
+      };
+
+      try {
+        await updateDoc(itemRef, updatedItem);
+        Swal.fire('Éxito', 'Item actualizado correctamente', 'success');
+        $('#editarItemModal').modal('hide');
+        document.getElementById('ver-items').click();
+      } catch (error) {
+        console.error('Error al actualizar el ítem:', error);
+        Swal.fire('Error', 'Hubo un problema al actualizar el ítem', 'error');
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</body>
+</html>
